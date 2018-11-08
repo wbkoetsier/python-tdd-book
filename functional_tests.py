@@ -1,5 +1,11 @@
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import unittest
+
+DEFAULT_WAIT = 20  # seconds
+
 
 class NewVisitorTest(unittest.TestCase):
     
@@ -15,19 +21,36 @@ class NewVisitorTest(unittest.TestCase):
         self.browser.get('http://localhost:8000')
 
         # She notices the page title and header mention to-do lists
-        self.assertIn('To-Do', self.browser.title)  
-        self.fail('Finish the test!')  
+        self.assertIn('To-Do', self.browser.title)
+        header_text = self.browser.find_element_by_tag_name('h1').text  
+        self.assertIn('To-Do', header_text)
 
         # She is invited to enter a to-do item straight away
+        inputbox = self.browser.find_element_by_id('id_new_item')
+        self.assertEqual(
+            inputbox.get_attribute('placeholder'),
+            'Enter a to-do item'
+        )
 
         # She types "Feed the ducks" into a text box 
+        inputbox.send_keys('Feed the ducks')  
 
         # When she hits enter, the page updates, and now the page lists
         # "1: Feed the ducks" as an item in a to-do list.
+        inputbox.send_keys(Keys.ENTER)
+        table = WebDriverWait(browser, DEFAULT_WAIT).until(
+            EC.presence_of_element_located((By.ID, self.browser.get('id_list_table')))
+        )
+        # table = self.browser.find_element_by_id('id_list_table')
+        rows = table.find_elements_by_tag_name('tr')  
+        self.assertTrue(
+            any(row.text == '1: Feed the ducks' for row in rows)
+        )
 
         # There is still a text box inviting her to add another item. She enters 
         # "Don't forget to close the fence" (we can't have the ducks wander off 
         # onto the street).
+        self.fail('Finish the test!')
 
         # The page updates again, and now shows both items on her list
 

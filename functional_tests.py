@@ -5,6 +5,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import unittest
 
+import time
+
 DEFAULT_WAIT = 20  # seconds
 
 
@@ -39,22 +41,27 @@ class NewVisitorTest(unittest.TestCase):
         # When she hits enter, the page updates, and now the page lists
         # "1: Feed the ducks" as an item in a to-do list.
         inputbox.send_keys(Keys.ENTER)
+        time.sleep(2)
         table = WebDriverWait(self.browser, DEFAULT_WAIT).until(
             EC.presence_of_element_located((By.ID, 'id_list_table'))
         )
         # table = self.browser.find_element_by_id('id_list_table')
-        rows = table.find_elements_by_tag_name('tr')  
-        self.assertTrue(
-            any(row.text == '1: Feed the ducks' for row in rows),
-            "New to-do item did not appear in table"
-        )
+        rows = table.find_elements_by_tag_name('tr')
+        self.assertIn('1: Feed the ducks', [row.text for row in rows])
 
         # There is still a text box inviting her to add another item. She enters 
         # "Don't forget to close the fence" (we can't have the ducks wander off 
         # onto the street).
-        self.fail('Finish the test!')
+        inputbox = self.browser.find_element_by_id('id_new_item')
+        inputbox.send_keys('Don\'t forget to close the fence')
+        inputbox.send_keys(Keys.ENTER)
+        time.sleep(2)
 
         # The page updates again, and now shows both items on her list
+        table = self.browser.find_element_by_id('id_list_table')
+        rows = table.find_elements_by_tag_name('tr')
+        self.assertIn('2: Don\'t forget to close the fence', [row.text for row in rows])
+        self.fail('Finish the test!')
 
         # Elisabeth wonders whether the site will remember her list. Then she 
         # sees that the site has generated a unique URL for her -- there is some 

@@ -37,7 +37,7 @@ class HomePageTest(TestCase):
     def test_redirects_after_POST(self):
         response = self.client.post('/', data={'item_text': 'A new list item'})
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], '/')
+        self.assertEqual(response['location'], '/lists/the-only-list-in-the-world/')
     
     def test_home_page_returns_correct_html(self):
         response = self.client.get('/')
@@ -47,12 +47,19 @@ class HomePageTest(TestCase):
         self.client.get('/')
         self.assertEqual(Item.objects.count(), 0)
     
+
+class ListViewTest(TestCase):
+    
+    def test_uses_list_template(self):
+        response = self.client.get('/lists/the-only-list-in-the-world/')
+        self.assertTemplateUsed(response, 'lists/list.html')
+    
     def test_displays_all_list_items(self):
         itemeys = ['itemey 1', 'itemey 2']
         for txt in itemeys:
             Item.objects.create(text=txt)
 
-        response = self.client.get('/')
+        response = self.client.get('/lists/the-only-list-in-the-world/')
         
         for txt in itemeys:
-            self.assertIn(txt, response.content.decode())
+            self.assertContains(response, txt)

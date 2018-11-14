@@ -101,8 +101,8 @@ class NewVisitorTest(LiveServerTestCase):
             self.assertNotIn(txt, page_text)
 
         # Jasper starts a new list by entering a new item.
-        self.input_todo_item('Buy milk')
-        self.wait_for_row_in_list_table('1: Buy milk')
+        self.input_todo_item('Buy Elisabeth 20kg waterfowl pellets')
+        self.wait_for_row_in_list_table('1: Buy Elisabeth 20kg waterfowl pellets')
 
         # Jasper gets his own unique URL
         jasper_list_url = self.browser.current_url
@@ -112,7 +112,7 @@ class NewVisitorTest(LiveServerTestCase):
         # Again, there is no trace of Edith's list
         page_text = self.browser.find_element_by_tag_name('body').text
         self.assertNotIn('Feed the ducks', page_text)
-        self.assertIn('Buy milk', page_text)
+        self.assertIn('Buy Elisabeth 20kg', page_text)
 
         # Satisfied, they both go back to sleep
 

@@ -3,12 +3,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import WebDriverException
 import unittest
 from django.test import LiveServerTestCase
 
 import time
 
-DEFAULT_WAIT = 20  # seconds
+MAX_WAIT = 10  # seconds
 
 
 class NewVisitorTest(LiveServerTestCase):
@@ -27,12 +28,19 @@ class NewVisitorTest(LiveServerTestCase):
         )
         inputbox.send_keys(item_text)
         inputbox.send_keys(Keys.ENTER)
-        time.sleep(2)
-
-    def check_for_row_in_list_table(self, row_text: str=''):
-        table = self.browser.find_element_by_id('id_list_table')
-        rows = table.find_elements_by_tag_name('tr')
-        self.assertIn(row_text, [row.text for row in rows])
+        
+    def wait_for_row_in_list_table(self, row_text):
+        start_time = time.time()
+        while True:  
+            try:
+                table = self.browser.find_element_by_id('id_list_table')  
+                rows = table.find_elements_by_tag_name('tr')
+                self.assertIn(row_text, [row.text for row in rows])
+                return  
+            except (AssertionError, WebDriverException) as e:  
+                if time.time() - start_time > MAX_WAIT:  
+                    raise e  
+                time.sleep(0.5) 
 
     def test_can_start_a_list_and_retrieve_it_later(self):  
         # Elisabeth has heard about a cool new online to-do app. She goes to 
@@ -49,14 +57,14 @@ class NewVisitorTest(LiveServerTestCase):
         # When she hits enter, the page updates, and now the page lists
         # "1: Feed the ducks" as an item in a to-do list.
         self.input_todo_item('Feed the ducks')
-        self.check_for_row_in_list_table('1: Feed the ducks')
+        self.wait_for_row_in_list_table('1: Feed the ducks')
 
         # There is still a text box inviting her to add another item. She enters 
         # "Don't forget to close the fence" (we can't have the ducks wander off 
         # onto the street).
         # The page updates again, and now shows both items on her list.
         self.input_todo_item('Don\'t forget to close the fence')
-        self.check_for_row_in_list_table('2: Don\'t forget to close the fence')
+        self.wait_for_row_in_list_table('2: Don\'t forget to close the fence')
         
         self.fail('Finish the test!')
 

@@ -46,3 +46,13 @@ class HomePageTest(TestCase):
     def test_only_saves_items_when_necessary(self):
         self.client.get('/')
         self.assertEqual(Item.objects.count(), 0)
+    
+    def test_displays_all_list_items(self):
+        itemeys = ['itemey 1', 'itemey 2']
+        for txt in itemeys:
+            Item.objects.create(text=txt)
+
+        response = self.client.get('/')
+        
+        for txt in itemeys:
+            self.assertIn(txt, response.content.decode())

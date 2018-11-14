@@ -13,7 +13,12 @@ selenium==3.141.0
 urllib3==1.24.1
 ```
 
-Geckodriver: 0.23.0 (anywhere on the path).
+Geckodriver: 0.23.0 (anywhere on the path) with Firefox 63.0. Or visit https://github.com/mozilla/geckodriver/releases.
 
 ## Run
 `python manage.py runserver`
+
+## Test
+`python manage.py test functional_tests`
+
+`python manage.py test lists`

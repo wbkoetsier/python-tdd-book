@@ -15,6 +15,8 @@ urllib3==1.24.1
 
 Geckodriver: 0.23.0 (anywhere on the path) with Firefox 63.0. Or visit https://github.com/mozilla/geckodriver/releases.
 
+[(Vanilla) Bootstrap 3.3.4](https://github.com/twbs/bootstrap/releases/download/v3.3.4/bootstrap-3.3.4-dist.zip).
+
 ## Run
 `python manage.py runserver`
 

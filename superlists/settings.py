@@ -15,8 +15,8 @@ from pathlib import Path
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_DIR = Path(__file__).resolve().parents[1]
-
+# pathlib solution, build paths like: NEW_PATH = BASE_DIR / 'yourpath'
+BASE_DIR = Path(__file__).parents[1]
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -121,4 +121,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = Path(BASE_DIR, 'static')
+STATIC_ROOT = BASE_DIR / 'static'

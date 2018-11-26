@@ -27,7 +27,7 @@ SECRET_KEY = 'xf0($akmb8#+i^!=@648v16*c!t91vrvg@67b*o9k-7$u)71d0'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']  # TODO wildcard: hack!!
 
 
 # Application definition

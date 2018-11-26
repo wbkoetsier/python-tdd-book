@@ -3,6 +3,7 @@ from django.urls import resolve
 from django.http import HttpRequest
 from lists.views import home_page
 from lists.models import Item, List
+from superlists import settings as superlists_settings
 
 
 class ListAndItemModelsTest(TestCase):
@@ -116,3 +117,13 @@ class NewItemTest(TestCase):
         )
 
         self.assertRedirects(response, f'/lists/{correct_list.id}/')
+
+class UtilsTest(TestCase):
+    """Test any util functions"""
+    
+    def test_strtobool(self):
+        for s in ['TRUE', 'True', 'true', 'TrUe', '1', 't', 'T']:
+            self.assertTrue(superlists_settings.strtobool(s))
+        # anything else should return false
+        for s in ['False', '0', 'bla']:
+            self.assertFalse(superlists_settings.strtobool(s))

@@ -21,14 +21,23 @@ BASE_DIR = Path(__file__).parents[1]
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'xf0($akmb8#+i^!=@648v16*c!t91vrvg@67b*o9k-7$u)71d0'
+def strtobool(s: str='') -> bool:
+    """Return True if the (lowercase of the) string is one of true, t or 1"""
+    if not s or not isinstance(s, str): return False
+    return s.lower() in [
+        'true', 't', '1'
+    ]
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']  # TODO wildcard: hack!!
-
+# DJANGO_DEBUG only needs to be set explicitely when it must be True
+if strtobool(os.environ.get('DJANGO_DEBUG', 'False')):
+    DEBUG = True
+    SECRET_KEY = 'insecure-key-for-dev'
+    ALLOWED_HOSTS = []
+else:
+    DEBUG = False
+    # let it fail hard!
+    SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+    ALLOWED_HOSTS = [os.environ['SITENAME']]
 
 # Application definition
 

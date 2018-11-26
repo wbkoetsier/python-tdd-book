@@ -49,7 +49,7 @@ Requires a credit card, but actual charging will only commence after the user's 
 Signing up will automatically create a project 'My First Project'. To change the name, go to hamburger menu (top left in 
 the blue bar) -> IAM & admin -> Settings. I'm leaving it as-is.
 
-### Creating a server using the web interface
+### Creating a server
 GCP has many products to offer and it can be hard to decide which you actually need. For the purpose of this course, 
 Compute Engine is a good choice.
 
@@ -71,41 +71,46 @@ select the default access service account.
 - For the staging site, allow HTTP traffic.
 - Ignore "Management, security, disks, networking, sole tenancy".
 
-### Creating a server using cli
 TODO - use gcloud to create an instance
- 
-The interface allows a preview of the REST or cli equivalent of the above choices. Actually, using 
-[`gcloud`](https://cloud.google.com/sdk/gcloud/reference/compute/) is a very good alternative to using the web 
-interface. I installed gcloud using [this quickstart](https://cloud.google.com/sdk/docs/quickstart-debian-ubuntu). The 
-automatically generated gcloud command line (I've replaced my project and instance names with a placeholder):
 
-```bash
-gcloud beta compute --project=<project ID> instances create <instance name> 
-  --zone=us-east1-b 
-  --machine-type=f1-micro 
-  --subnet=default 
-  --network-tier=PREMIUM 
-  --maintenance-policy=MIGRATE 
-  --no-service-account 
-  --no-scopes 
-  --tags=http-server 
-  --image=ubuntu-1804-bionic-v20181120 
-  --image-project=ubuntu-os-cloud 
-  --boot-disk-size=20GB 
-  --boot-disk-type=pd-standard 
-  --boot-disk-device-name=instance-1
-
-gcloud compute --project=<project ID> firewall-rules create default-allow-http 
-  --direction=INGRESS 
-  --priority=1000 
-  --network=default 
-  --action=ALLOW 
-  --rules=tcp:80 
-  --source-ranges=0.0.0.0/0 
-  --target-tags=http-server
-```
+- https://cloud.google.com/sdk/gcloud/reference/compute/
+- https://cloud.google.com/sdk/docs/quickstart-debian-ubuntu
 
 ### Accessing the server
 The Compute Engine menu on the left has an item 'VM instances'. Click the 'SSH'-button next to the created instance. 
-This will open a console in the browser (new window). The server is ready to pick up chapter 9 of the course.
+This will open a console in the browser (new window), with the user logged in and at `~`.
 
+### Domain name
+I bought a domain name with a Dutch company for just a couple of euros. It's in a parked state (it refers to an IP 
+address of that company, showing a standard message about the domain being parked) and needs to direct to my new server 
+instead.
+
+My Google VM instance also shows it's public IP address. I can log in to my dashboard with the registrar and change my 
+DNS settings - replace the registrar's IP address with my Google one. I chose to enter a couple of subdomains for this 
+project but I'm also allowed to use a wildcard. I didn't edit the TTL, 24h (my regisrar's default) is fine. It takes a 
+couple hours at least for these changes to propagate.
+
+Note that the external IP address is an ephemeral one, which means it will be returned to Googles IP pool when the VM 
+instance shuts down. When spinning up a new server, it will be assigned an IP address from that pool, which may be a 
+different one than configured now. That would mean also changing the IP address in the registrar.
+
+### Port and firewall
+The author let's us run the server on port 8000. That port is closed by the GCP default firewall rules, so we have to 
+add a new rule to allow traffic coming in on port 8000. Go to hamburger menu -> VPC Network -> 
+[Firewall rules](https://cloud.google.com/vpc/docs/firewalls).
+
+Click Create a firewall rule.
+- name: something like `allow-http-8000`.
+- priority: I'm keeping the default 1000. The lower the number, the higher the priority.
+- Direction of traffic: ingress (incoming).
+- Action: allow.
+- Target: I guess it's ok to to specify 'all instances in the network' but I'll try to specify a target (specified 
+target tags). A newly created VM by default has the network tag 'http-server', so you can enter that as target tag. I 
+suppose the name of the VM should work too, but I haven't tried that. It's also possible to create new tags for your VM, 
+but I haven't tried that either.
+- Source target: IP ranges, `0.0.0.0/0`.
+- Protocols and ports: pick specified protocols and ports, TCP, enter 8000.
+
+Click create. Firewall rules can be set using gcloud (or the REST API) as well.
+
+TODO: it's best practice to close off any unused ports - look into that.

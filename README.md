@@ -4,7 +4,7 @@ Following the book in print (5th edition) and [online](https://www.obeythetestin
 ## Requirements
 Python: 3.6+
 
-`pip freeze`:
+`pip freeze` locally:
 ```
 Django==1.11.16
 pkg-resources==0.0.0
@@ -16,6 +16,15 @@ urllib3==1.24.1
 Geckodriver: 0.23.0 (anywhere on the path) with Firefox 63.0. Or visit https://github.com/mozilla/geckodriver/releases.
 
 [(Vanilla) Bootstrap 3.3.4](https://github.com/twbs/bootstrap/releases/download/v3.3.4/bootstrap-3.3.4-dist.zip).
+
+
+`pip freeze` on server:
+```
+Django==1.11.16
+gunicorn==19.9.0
+pkg-resources==0.0.0
+pytz==2018.7
+```
 
 ## Run
 `python manage.py runserver`
@@ -78,7 +87,8 @@ TODO - use gcloud to create an instance
 
 ### Accessing the server
 The Compute Engine menu on the left has an item 'VM instances'. Click the 'SSH'-button next to the created instance. 
-This will open a console in the browser (new window), with the user logged in and at `~`.
+This will open a console in the browser (new window), with the user logged in and at `~`. Accessing the server using a 
+different SSH client requires additional setup., which I haven't tried.
 
 ### Domain name
 I bought a domain name with a Dutch company for just a couple of euros. It's in a parked state (it refers to an IP 
@@ -92,11 +102,13 @@ couple hours at least for these changes to propagate.
 
 Note that the external IP address is an ephemeral one, which means it will be returned to Googles IP pool when the VM 
 instance shuts down. When spinning up a new server, it will be assigned an IP address from that pool, which may be a 
-different one than configured now. That would mean also changing the IP address in the registrar.
+different one than configured now. That would mean also changing the IP address in the registrar. To request a static 
+IP (takes imediate effect), go to the hamburger menu -> VPC Network -> External IP addresses, and change the type of the 
+IP address in use by the VM instance.
 
 ### Port and firewall
-The author let's us run the server on port 8000. That port is closed by the GCP default firewall rules, so we have to 
-add a new rule to allow traffic coming in on port 8000. Go to hamburger menu -> VPC Network -> 
+The author initially let's us run the server on port 8000. That port is closed by the GCP default firewall rules, so we 
+have to add a new rule to allow traffic coming in on port 8000. Go to hamburger menu -> VPC Network -> 
 [Firewall rules](https://cloud.google.com/vpc/docs/firewalls).
 
 Click Create a firewall rule.
@@ -112,5 +124,17 @@ but I haven't tried that either.
 - Protocols and ports: pick specified protocols and ports, TCP, enter 8000.
 
 Click create. Firewall rules can be set using gcloud (or the REST API) as well.
+
+Later on in the chapter, we switch to the combination Nginx+Gunicorn and port 8000 can be closed off again. Either 
+disable the firewall rule (click the rule, click Edit, unfold 'Disable', disable and save) or delete it alltogether 
+(also in the Details view of the rule, next to the Edit button).
+
+### Additional security
+The author has also mentioned it by linking to 
+[an article](https://plusbryan.com/my-first-5-minutes-on-a-server-or-essential-security-for-linux-servers), but these 2 
+things:
+- Edit the SSH conf to disable root login (also, _Never_ set a root password on Ubuntu)
+- Install fail2ban (at the very least, in it's default state it scans SSH usage, perhaps configure it to scan the Nginx 
+access log as well)
 
 TODO: it's best practice to close off any unused ports - look into that.

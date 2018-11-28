@@ -30,11 +30,13 @@ pytz==2018.7
 `python manage.py runserver`
 
 ## Test
-`python manage.py test functional_tests`
+`python manage.py test functional_tests[ --failfast]`
+
+To run the test in a headless browser, see https://stackoverflow.com/a/23447450/4703154.
 
 `python manage.py test lists`
 
-## Staging server
+## Servers
 ### Choice of server
 In chapter 9 "Testing Deployment Using a Staging Site" the author invites the readers to use an actual server rather 
 than a local VM. There are free and paid options to set up a server. I decided to go with the paid option, this course 
@@ -62,33 +64,87 @@ the blue bar) -> IAM & admin -> Settings. I'm leaving it as-is.
 GCP has many products to offer and it can be hard to decide which you actually need. For the purpose of this course, 
 Compute Engine is a good choice.
 
-- Go to hamburger menu -> Compute Engine. Click Create (blue button).
-- Name: I'm using the default name.
-- Region/Zone: the default S-Carolina offers the f1-micro instance that is within the always free limits.
+To use the web interface to create an instance, go to hamburger menu -> Compute Engine. Click Create (blue button).
+- Region/Zone: the default S-Carolina (us-east1-b) offers the f1-micro instance that is within the always free limits.
 - For always free, change the Machine type to f1 micro. It should be enough for trying the ToDo-app.
-- At this point, no container image.
 - Boot disk: 
   - OS image: the Ubuntu 18.04 will do. The [minimal](https://wiki.ubuntu.com/Minimal) is more suitable for a fully 
   automated deployment where cli usage isn't really needed.
   - Always free includes a standard persistant disk (as opposed to SSD) with 30 GB-months storage (30 GB 
   stored for one month). Some storage room is needed for the database but Ubuntu Server isn't that big. I'm going with 
   20GB.
-- Google IAM is actually quite complex. A server requires a 
-[service account](https://cloud.google.com/compute/docs/access/service-accounts#the_default_service_account) when 
-connecting to Google APIs, such as Storage or Stack Driver. I'd like to see if I can use stackdriver for logging so I'll 
-select the default access service account.
-- For the staging site, allow HTTP traffic.
-- Ignore "Management, security, disks, networking, sole tenancy".
+- Allow HTTP traffic.
 
-TODO - use gcloud to create an instance
+I used the `gcloud` commands to create a server:
 
-- https://cloud.google.com/sdk/gcloud/reference/compute/
-- https://cloud.google.com/sdk/docs/quickstart-debian-ubuntu
+```
+$ gcloud auth login                                  # opens a browser window to log in to a Google account
+$ gcloud projects list                               # discover your PROJECT_ID
+$ gcloud config set project <PROJECT_ID>
+$ gcloud beta compute instances create superlists \  # instance name
+    --image-family ubuntu-1804-lts \                 # image family
+    --image-project ubuntu-os-cloud \                # image project
+    --tags=http-server \                             # set network tag to allow HTTP traffic 
+    --zone=us-east1-b \                              # S. Carolina
+    --machine-type=f1-micro \                        # the always free machine type (provided it's in the correct zone)
+    --boot-disk-size=20GB \                          # well below the 30GB/month max in the always free
+```
+
+Output:
+
+```
+WARNING: You have selected a disk size of under [200GB]. This may result in poor I/O performance. For more information, see: https://developers.google.com/compute/docs/disks#performance.
+Created [https://www.googleapis.com/compute/beta/projects/<PROJECT_ID>/zones/us-east1-b/instances/superlists].
+NAME        ZONE        MACHINE_TYPE  PREEMPTIBLE  INTERNAL_IP  EXTERNAL_IP      STATUS
+superlists  us-east1-b  f1-micro                   xx.xx.xx.xx  xx.xx.xx.xx  RUNNING
+```
+
+References:
+- [Compute Engine docs - Creating and Starting a VM Instance](https://cloud.google.com/compute/docs/instances/create-start-instance)
+- [Cloud SDK docs - Quickstart for Debian and Ubuntu](https://cloud.google.com/sdk/docs/quickstart-debian-ubuntu)
+- [Cloud SDK docs - gcloud compute](https://cloud.google.com/sdk/gcloud/reference/compute/), also check the 
+[beta](https://cloud.google.com/sdk/gcloud/reference/beta/compute/) variant
 
 ### Accessing the server
 The Compute Engine menu on the left has an item 'VM instances'. Click the 'SSH'-button next to the created instance. 
-This will open a console in the browser (new window), with the user logged in and at `~`. Accessing the server using a 
-different SSH client requires additional setup., which I haven't tried.
+This will open a console in the browser (new window), with the user logged in and at `~`. The username should be the
+username part of your gmail address.
+
+Accessing the server using a different SSH client requires enabling OS Login: go to hamburger menu -> Compute Engine -> 
+Metadata. Either click Edit or Add Metadata. Add a new key-value pair, where key is `enable-oslogin` and value is 
+`TRUE`. Click Save. Note that this creates a new Ubuntu user: `username_gmail_com` instead of `username`.
+
+This method also requires 
+[some IAM roles to be configured](https://cloud.google.com/compute/docs/instances/managing-instance-access#configure_users).
+Go to hamburger menu -> IAM & admin -> IAM (Permissions for project "Project name"), find your email address in the list
+of members and click the edit pencil next to it. I have added 'Compute OS Admin Login' (Compute) and 'Service Account 
+Admin' (IAM). 
+
+Add an SSH key to the Compute project metadata: 
+
+`$ gcloud compute os-login ssh-keys add --key-file path/to/relevant/key.pub --ttl 0`
+
+Where the path is most likely `~/.ssh/id_rsa.pub`. The output can be printed again by:
+
+`$ gcloud compute os-login describe-profile`
+
+To access the VM instance using this key:
+
+`$ ssh username_gmail_com@external.ip`
+
+Note that since the SSH keys are now managed project-wide by OS Login, you don't need to add a key for each new 
+instance.
+
+References:
+- [Compute Engine docs - Connecting to Instances Using Advanced Methods](https://cloud.google.com/compute/docs/instances/connecting-advanced)
+  - "SSH keys are created and managed for you whenever you 
+  [connect using Compute Engine tools](https://cloud.google.com/compute/docs/instances/connecting-to-instance)." By this
+  they mean when you use the web interface or the `gcloud compute ssh` command (which will ask to create a key).
+  - Compute offers 3 ways of providing public SSH keys to instances:
+    - [Use IAM roles and OS Login](https://cloud.google.com/compute/docs/instances/managing-instance-access). This is 
+    the method I described above.
+    - [Manually add SSH keys to metadata (advanced)](https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys).
+    - Have someone else manage your keys.
 
 ### Domain name
 I bought a domain name with a Dutch company for just a couple of euros. It's in a parked state (it refers to an IP 
@@ -102,9 +158,10 @@ couple hours at least for these changes to propagate.
 
 Note that the external IP address is an ephemeral one, which means it will be returned to Googles IP pool when the VM 
 instance shuts down. When spinning up a new server, it will be assigned an IP address from that pool, which may be a 
-different one than configured now. That would mean also changing the IP address in the registrar. To request a static 
-IP (takes imediate effect), go to the hamburger menu -> VPC Network -> External IP addresses, and change the type of the 
-IP address in use by the VM instance.
+different one than configured now. That would mean also changing the IP address in the registrar.
+- To request a static IP (takes imediate effect): go to the hamburger menu -> VPC Network -> External IP addresses, and 
+change the type of the IP address in use by the VM instance.
+- To attach an existing external IP: change the static address to point to your new instance.
 
 ### Port and firewall
 The author initially let's us run the server on port 8000. That port is closed by the GCP default firewall rules, so we 
@@ -131,10 +188,12 @@ disable the firewall rule (click the rule, click Edit, unfold 'Disable', disable
 
 ### Additional security
 The author has also mentioned it by linking to 
-[an article](https://plusbryan.com/my-first-5-minutes-on-a-server-or-essential-security-for-linux-servers), but these 2 
+[an article](https://plusbryan.com/my-first-5-minutes-on-a-server-or-essential-security-for-linux-servers), but these 3 
 things:
-- Edit the SSH conf to disable root login (also, _Never_ set a root password on Ubuntu)
+- Keep Ubuntu updated (`sudo apt update` and `sudo apt upgrade`).
+- Edit the SSH conf to disable root login (also, _Never_ set a root password on Ubuntu), specifically: set 
+`PermitRootLogin no`.
 - Install fail2ban (at the very least, in it's default state it scans SSH usage, perhaps configure it to scan the Nginx 
-access log as well)
+access log as well).
 
 TODO: it's best practice to close off any unused ports - look into that.

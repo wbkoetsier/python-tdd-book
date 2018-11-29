@@ -197,3 +197,18 @@ things:
 access log as well).
 
 TODO: it's best practice to close off any unused ports - look into that.
+
+### Provisioning
+I find that to run the fabfile from chapter 11, I need to:
+
+- Manually add to the default Python on the VM:
+
+```
+sudo apt install python3-pip python3-setuptools python3.6-venv
+```
+
+I haven't tested adding this to the fabfile instead, that would be a useful exercise when I created a new VM.
+
+- Use dotenv to get Django to use the `.env` file. See the changes in commit #20c02d9.
+
+

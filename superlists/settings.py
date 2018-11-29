@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,6 +28,8 @@ def strtobool(s: str='') -> bool:
     return s.lower() in [
         'true', 't', '1'
     ]
+
+load_dotenv(BASE_DIR / '.env')
 
 # DJANGO_DEBUG only needs to be set explicitely when it must be True
 if strtobool(os.environ.get('DJANGO_DEBUG', 'False')):

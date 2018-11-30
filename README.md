@@ -201,7 +201,7 @@ TODO: it's best practice to close off any unused ports - look into that.
 ### Provisioning
 I find that to run the fabfile from chapter 11, I need to:
 
-- Manually add to the default Python on the VM:
+- Manually add to the default Python 3.6 on the VM:
 
 ```
 sudo apt install python3-pip python3-setuptools python3.6-venv
@@ -211,4 +211,31 @@ I haven't tested adding this to the fabfile instead, that would be a useful exer
 
 - Use dotenv to get Django to use the `.env` file. See the changes in commit #20c02d9.
 
+Install Nginx:
 
+```
+$ sudo apt update && sudo apt install nginx
+```
+As per chapter 11, the manual steps on the VM to get Nginx and Gunicorn up and running are:
+
+```
+$ export DOMAIN=superlists.example.com
+$ cat /home/$USER/sites/$SITENAME/deploy_tools/nginx.template.conf \
+    | sed "s/DOMAIN/"$SITENAME"/g;s/USER/"$USER"/g" \
+    | sudo tee /etc/nginx/sites-available/$SITENAME
+
+$ sudo ln -s /etc/nginx/sites-available/$SITENAME \
+    /etc/nginx/sites-enabled/$SITENAME
+
+$ cat /home/$USER/sites/$SITENAME/deploy_tools/gunicorn-systemd.template.service \
+    | sed "s/DOMAIN/"$SITENAME"/g;s/USER/"$USER"/g" \
+    | sudo tee /etc/systemd/system/gunicorn-$SITENAME.service
+
+$ sudo systemctl daemon-reload
+$ sudo systemctl reload nginx
+$ sudo systemctl enable gunicorn-$SITENAME
+$ sudo systemctl start gunicorn-$SITENAME
+$ unset DOMAIN
+```
+
+Note that I included `USER` in the Nginx and Gunciorn templates.

@@ -24,6 +24,16 @@ class FunctionalTest(StaticLiveServerTestCase):
     def tearDown(self):  
         self.browser.quit()
     
+    def wait_for(self, fn):  
+        start_time = time.time()
+        while True:
+            try:
+                return fn()
+            except (AssertionError, WebDriverException) as e:
+                if time.time() - start_time > MAX_WAIT:
+                    raise e
+                time.sleep(0.5)
+    
     def input_todo_item(self, item_text: str=''):
         inputbox = self.browser.find_element_by_id('id_new_item')
         self.assertEqual(

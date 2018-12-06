@@ -219,7 +219,7 @@ $ sudo apt update && sudo apt install nginx
 As per chapter 11, the manual steps on the VM to get Nginx and Gunicorn up and running are:
 
 ```
-$ export DOMAIN=superlists.example.com
+$ export SITENAME=superlists.example.com
 $ cat /home/$USER/sites/$SITENAME/deploy_tools/nginx.template.conf \
     | sed "s/DOMAIN/"$SITENAME"/g;s/USER/"$USER"/g" \
     | sudo tee /etc/nginx/sites-available/$SITENAME
@@ -235,7 +235,14 @@ $ sudo systemctl daemon-reload
 $ sudo systemctl reload nginx
 $ sudo systemctl enable gunicorn-$SITENAME
 $ sudo systemctl start gunicorn-$SITENAME
-$ unset DOMAIN
+$ unset SITENAME
 ```
 
 Note that I included `USER` in the Nginx and Gunciorn templates.
+
+### Deploy new code
+To deploy new code, I find that (ahead of chapter 17) besides running the fabfile I have to (on the server):
+
+```
+$ sudo systemctl restart gunicorn-superlists-staging.example.com
+```

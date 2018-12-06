@@ -33,9 +33,12 @@ class FunctionalTest(StaticLiveServerTestCase):
                 if time.time() - start_time > MAX_WAIT:
                     raise e
                 time.sleep(0.5)
-    
+
+    def get_item_input_box(self):
+        return self.browser.find_element_by_id('id_text')
+
     def input_todo_item(self, item_text: str=''):
-        inputbox = self.browser.find_element_by_id('id_new_item')
+        inputbox = self.get_item_input_box()
         self.assertEqual(
             inputbox.get_attribute('placeholder'),
             'Enter a to-do item'

@@ -6,6 +6,8 @@ from lists.views import home_page
 from lists.models import Item, List
 from lists.forms import ItemForm, EMPTY_ITEM_ERROR
 
+from unittest import skip
+
 
 class HomePageTest(TestCase):
     
@@ -16,6 +18,7 @@ class HomePageTest(TestCase):
     def test_home_page_uses_item_form(self):
         response = self.client.get('/')
         self.assertIsInstance(response.context['form'], ItemForm)
+
 
 class NewListTest(TestCase):
 
@@ -137,3 +140,16 @@ class ListViewTest(TestCase):
         self.assertIsInstance(response.context['form'], ItemForm)
         self.assertContains(response, 'name="text"')
 
+    @skip('needs form to know what list an item is in')
+    def test_duplicate_item_validation_errors_end_up_on_lists_page(self):
+        list1 = List.objects.create()
+        item1 = Item.objects.create(list=list1, text='textey')
+        response = self.client.post(
+            f'/lists/{list1.id}/',
+            data={'text': 'textey'}
+        )
+
+        expected_error = escape("You've already got this in your list")
+        self.assertContains(response, expected_error)
+        self.assertTemplateUsed(response, 'lists/list.html')
+        self.assertEqual(Item.objects.all().count(), 1)

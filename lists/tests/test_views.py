@@ -5,7 +5,6 @@ from django.utils.html import escape
 from lists.views import home_page
 from lists.models import Item, List
 from lists.forms import ItemForm, EMPTY_ITEM_ERROR
-from superlists import settings as superlists_settings
 
 
 class HomePageTest(TestCase):
@@ -138,12 +137,3 @@ class ListViewTest(TestCase):
         self.assertIsInstance(response.context['form'], ItemForm)
         self.assertContains(response, 'name="text"')
 
-class UtilsTest(TestCase):
-    """Test any util functions"""
-    
-    def test_strtobool(self):
-        for s in ['TRUE', 'True', 'true', 'TrUe', '1', 't', 'T']:
-            self.assertTrue(superlists_settings.strtobool(s))
-        # anything else should return false
-        for s in ['False', '0', 'bla']:
-            self.assertFalse(superlists_settings.strtobool(s))
